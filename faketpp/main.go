@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	"github.com/mr-tron/base58"
 	badRandom "math/rand"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 )
 
@@ -14,6 +19,9 @@ const (
 	urlResourceAuthorize           = "/vedsdk/authorize/"
 	urlResourceCertificateRequest  = "/vedsdk/certificates/request"
 	urlResourceCertificateRetrieve = "/vedsdk/certificates/retrieve"
+	listenAddr                     = ":8080"
+	caFile                         = "server.crt"
+	keyFile                        = "server.key"
 )
 
 func main() {
@@ -23,6 +31,23 @@ func main() {
 	e.POST(urlResourceAuthorize, fakeAuth)
 	e.POST(urlResourceCertificateRequest, fakeRequest)
 	e.POST(urlResourceCertificateRetrieve, fakeRetrieve)
+	go func() {
+		log.Infof("Start listen http service on %s", listenAddr)
+		if err := e.StartTLS(listenAddr, caFile, keyFile); err != nil {
+			log.Errorf("shutting down the server: %s", listenAddr)
+		} else {
+			log.Error("shutting down the server")
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
 }
 
 type errorMessage struct {
@@ -80,10 +105,11 @@ func fakeRetrieve(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorMessage{err.Error()})
 	}
+
 	r := struct {
 		CertificateData string
 	}{
-		cert,
+		base64.StdEncoding.EncodeToString([]byte(cert)),
 	}
 	return c.JSON(http.StatusOK, r)
 }

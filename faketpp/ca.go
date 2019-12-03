@@ -1,6 +1,13 @@
 package main
 
-import "crypto/x509"
+import (
+	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
+	"math/big"
+	"time"
+)
 
 const (
 	CACertPem = `-----BEGIN CERTIFICATE-----
@@ -27,5 +34,20 @@ JRNUBEu+38CHhjdKVPjTSJE3982cEPEr7ZZgRng0GQ==
 )
 
 func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
-	return nil, nil
+	template := x509.Certificate{}
+	template.Subject = req.Subject
+	template.URIs = req.URIs
+	template.SerialNumber = big.NewInt(time.Now().UnixNano())
+
+	ca, caKey := getCA()
+	cert, err = x509.CreateCertificate(rand.Reader, &template, ca, req.PublicKey, caKey)
+	return
+}
+
+func getCA() (*x509.Certificate, *ecdsa.PrivateKey) {
+	p, _ := pem.Decode([]byte(CACertPem))
+	caCert, _ := x509.ParseCertificate(p.Bytes)
+	p, _ = pem.Decode([]byte(CAKeyPem))
+	key, _ := x509.ParseECPrivateKey(p.Bytes)
+	return caCert, key
 }
