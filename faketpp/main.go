@@ -19,9 +19,11 @@ const (
 	urlResourceAuthorize           = "/vedsdk/authorize/"
 	urlResourceCertificateRequest  = "/vedsdk/certificates/request"
 	urlResourceCertificateRetrieve = "/vedsdk/certificates/retrieve"
-	listenAddr                     = ":8080"
-	caFile                         = "server.crt"
-	keyFile                        = "server.key"
+	urlResourceCertificatePolicy   = "/vedsdk/certificates/checkpolicy"
+
+	listenAddr = ":8080"
+	caFile     = "server.crt"
+	keyFile    = "server.key"
 )
 
 func main() {
@@ -31,6 +33,7 @@ func main() {
 	e.POST(urlResourceAuthorize, fakeAuth)
 	e.POST(urlResourceCertificateRequest, fakeRequest)
 	e.POST(urlResourceCertificateRetrieve, fakeRetrieve)
+	e.POST(urlResourceCertificatePolicy, fakePolicy)
 	go func() {
 		log.Infof("Start listen http service on %s", listenAddr)
 		if err := e.StartTLS(listenAddr, caFile, keyFile); err != nil {
