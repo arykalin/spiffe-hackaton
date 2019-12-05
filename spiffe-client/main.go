@@ -1,11 +1,14 @@
 package main
 
 import (
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
-	"github.com/spiffe/go-spiffe/spiffe"
+	"github.com/spiffe/go-spiffe/workload"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -67,22 +70,11 @@ func main() {
 
 	//pp(pcc)
 	fmt.Println(pcc.Certificate)
-
-	// Verify the certificate chain. Allow the remote peer to have any SPIFFE ID as
-	// the authorization check will happen via `orig`.
-	var certs []*x509.Certificate
-	cert, err := x509.ParseCertificate([]byte(pcc.Certificate))
+	svid, err := pemCollectionTOCVID(*pcc)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	certs = append(certs, cert)
-	var roots map[string]*x509.CertPool
-	//roots
-	verifiedChains, err := spiffe.VerifyPeerCertificate(certs, roots, spiffe.ExpectAnyPeer())
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-	log.Println(verifiedChains)
+	log.Println(svid.SPIFFEID)
 }
 
 var pp = func(a interface{}) {
@@ -91,4 +83,37 @@ var pp = func(a interface{}) {
 		fmt.Println("error:", err)
 	}
 	log.Println(string(b))
+}
+
+func pemCollectionTOCVID(collection certificate.PEMCollection) (svid workload.X509SVID, err error) {
+	p, _ := pem.Decode([]byte(collection.Certificate))
+	cert, err := x509.ParseCertificate(p.Bytes)
+	if err != nil {
+		return
+	}
+	svid.SPIFFEID = cert.URIs[0].String()
+	svid.Certificates = []*x509.Certificate{cert}
+	for _, c := range collection.Chain {
+		p, _ = pem.Decode([]byte(c))
+		cert, err = x509.ParseCertificate(p.Bytes)
+		if err != nil {
+			return
+		}
+		svid.Certificates = append(svid.Certificates, cert)
+	}
+	p, _ = pem.Decode([]byte(collection.PrivateKey))
+	key, _ := x509.ParsePKCS8PrivateKey(p.Bytes)
+	switch key.(type) {
+	case *rsa.PrivateKey:
+		svid.PrivateKey = key.(*rsa.PrivateKey)
+	case *ecdsa.PrivateKey:
+		svid.PrivateKey = key.(*ecdsa.PrivateKey)
+	}
+	p, _ = pem.Decode([]byte(CACertPem))
+	cert, _ = x509.ParseCertificate(p.Bytes)
+	pool := x509.NewCertPool()
+	pool.AddCert(cert)
+	svid.TrustBundle = []*x509.Certificate{cert}
+	svid.TrustBundlePool = pool
+	return
 }
