@@ -112,7 +112,7 @@ func fakeRetrieve(c echo.Context) error {
 	r := struct {
 		CertificateData string
 	}{
-		base64.StdEncoding.EncodeToString([]byte(cert)),
+		base64.StdEncoding.EncodeToString([]byte(cert + "\n" + CACertPem)),
 	}
 	return c.JSON(http.StatusOK, r)
 }

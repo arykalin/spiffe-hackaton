@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+var hardcodedSPIFFEMasks = []string{"spiffe://mydomain/*"}
+
 type _strValue struct {
 	Locked bool
 	Value  string
@@ -47,10 +49,12 @@ type serverPolicy struct {
 	UniqueSubjectEnforced bool
 	WhitelistedDomains    []string
 	WildcardsAllowed      bool
-	SPIFFERegexps         []string
+	SPIFFEMasks           []string
 }
 
 func fakePolicy(c echo.Context) error {
-	r := serverPolicy{}
+	r := serverPolicy{
+		SPIFFEMasks: hardcodedSPIFFEMasks,
+	}
 	return c.JSON(http.StatusOK, &r)
 }
