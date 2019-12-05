@@ -37,6 +37,7 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
 1. To validate certificate SPIFFE use workload API which should provide root trust bundle by client request
 1. Workload API is a server which have a registry of records like `spiffe://example.com/worload/pay` with selector conditionals
     which should be met in workload to give a certificate to it (node attestation).
+1. Usually you have a SPIFFE agent running on workload which executes a set of accestors to properly identify the node.
 1. SPIFFE is not for authorization and transport level security. Fundamentally SPIFFE is about identity.
 
 ## How we can integrate
