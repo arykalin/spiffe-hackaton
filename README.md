@@ -28,3 +28,26 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
 ### Check that authenticated resource can perform read\write\delete action (authorization)
 1. Decide how we will perform policy check. Policy inside x509 or external resource?
 1. Check recieved request x.509 SVID and allow\reject action based on policy. 
+
+## General thoughts
+1. SPIFFE is a set of standards for multi platform workload authentication.
+1. SPIFFE have many implementations: SPIRE, Istio security, Consul-connect, ghostunnel etc.
+1. Main thing used for workload authentication is an x.509 certificate with SAN URI extension set to workload identifier. 
+    Example: `spiffe://example.com/worload/id`  
+1. To validate certificate SPIFFE use workload API which should provide root trust bundle by client request
+
+## How we can integrate
+1. Add support of URI type in the Subject Alternative Name extension (SAN extension, see [RFC 5280 section 4.2.16][2]) to\
+    our products policies.
+    1. Add same support to vCert SDK
+    1. TODO: describe exactly how this support should look like.
+    1. Policy example:
+    ```json
+    SubjAltNameUriRegex: 'spiffe://example.com/*'
+    ```    
+1. Provide ability to request and manage SPIFFE signing certificates (basically intermediate CAs) via API. Since most of the systems
+    which implement SPIFFE have support of exporting external CA we can manage this certificates on TPP\Cloud
+1. Provide same ability for leaf (client) certificates
+
+
+[2]: https://tools.ietf.org/html/rfc5280#section-4.2.1.
