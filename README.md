@@ -35,6 +35,9 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
 1. Main thing used for workload authentication is an x.509 certificate with SAN URI extension set to workload identifier. 
     Example: `spiffe://example.com/worload/id`  
 1. To validate certificate SPIFFE use workload API which should provide root trust bundle by client request
+1. Workload API is a server which have a registry of records like `spiffe://example.com/worload/pay` with selector conditionals
+    which should be met in workload to give a certificate to it (node attestation).
+1. SPIFFE is not for authorization and transport level security.
 
 ## How we can integrate
 1. Add support of URI type in the Subject Alternative Name extension (SAN extension, see [RFC 5280 section 4.2.16][2]) to\
