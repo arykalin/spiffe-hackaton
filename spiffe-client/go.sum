@@ -4,6 +4,8 @@ github.com/Venafi/vcert v0.0.0-20191206152806-e4a36d7540b7 h1:KkPyGWoRTyc2nveuMS
 github.com/Venafi/vcert v0.0.0-20191206152806-e4a36d7540b7/go.mod h1:5T4bFPhcgGXbdz8nVVRuE2gXSRDlZVL+9T5CwZZ3Yk4=
 github.com/Venafi/vcert v0.0.0-20191206162539-956e58d4deae h1:Rvrdo/5i6i0GeTnXewcwzlByZfjQs1fYM/0Zq1//R98=
 github.com/Venafi/vcert v0.0.0-20191206162539-956e58d4deae/go.mod h1:5T4bFPhcgGXbdz8nVVRuE2gXSRDlZVL+9T5CwZZ3Yk4=
+github.com/Venafi/vcert v0.0.0-20191206224331-957eb2bbe2b4 h1:uIpB3Ufuhm99Q3O+Y89caJ7RZ4Gga8LJYyzP1CY7bTg=
+github.com/Venafi/vcert v0.0.0-20191206224331-957eb2bbe2b4/go.mod h1:5T4bFPhcgGXbdz8nVVRuE2gXSRDlZVL+9T5CwZZ3Yk4=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

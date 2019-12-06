@@ -29,7 +29,7 @@
     },
     "SubjAltNameUriRegex": {
       "Locked": true,
-      "Value": "spiffe://test1.domain/*"
+      "Value": "spiffe://test1.domain/.*"
     },
     "PrivateKeyReuseAllowed": true,
     "SubjAltNameDnsAllowed": true,
