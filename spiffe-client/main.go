@@ -45,7 +45,8 @@ func main() {
 		Subject: pkix.Name{
 			CommonName: "",
 		},
-		URIs: []*url.URL{&u},
+		URIs:      []*url.URL{&u},
+		KeyLength: 2048,
 	}
 
 	err = c.GenerateRequest(nil, enrollReq)
