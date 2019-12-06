@@ -27,6 +27,10 @@
       "Locked": false,
       "Value": "Enrollment"
     },
+    "SubjAltNameUriRegex": {
+      "Locked": true,
+      "Value": "spiffe://test12.domain/*"
+    },
     "PrivateKeyReuseAllowed": true,
     "SubjAltNameDnsAllowed": true,
     "SubjAltNameEmailAllowed": true,
