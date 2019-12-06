@@ -5,8 +5,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"io/ioutil"
 	"math/big"
+	"net/url"
+	"regexp"
 	"time"
 )
 
@@ -19,6 +22,10 @@ const (
 func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
 	template := x509.Certificate{}
 	template.Subject = req.Subject
+	err = validateSPIFFEURIs(req.URIs)
+	if err != nil {
+		return
+	}
 	template.URIs = req.URIs
 	template.SerialNumber = big.NewInt(time.Now().UnixNano())
 	template.NotBefore = time.Now()
@@ -27,6 +34,20 @@ func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
 	ca, caKey := getCA()
 	cert, err = x509.CreateCertificate(rand.Reader, &template, ca, req.PublicKey, caKey)
 	return
+}
+
+func validateSPIFFEURIs(uris []*url.URL) error {
+	if len(uris) != 1 {
+		return errors.New("bad length")
+	}
+	matched, err := regexp.MatchString(hardcodedSPIFFEMasks.Value, uris[0].String())
+	if err != nil {
+		return err
+	}
+	if !matched {
+		return errors.New("not matched spiffe uri")
+	}
+	return nil
 }
 
 func getCA() (*x509.Certificate, *rsa.PrivateKey) {
