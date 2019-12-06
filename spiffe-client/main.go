@@ -23,6 +23,7 @@ import (
 const (
 	trustFile          = "../faketpp/trust.pem"
 	trustDomain1CAFile = "../cert_db/trust1.domain.crt"
+	trustDomain2CAFile = "../cert_db/trust2.domain.crt"
 )
 
 func main() {
@@ -77,13 +78,25 @@ func main() {
 
 	_ = pcc.AddPrivateKey(enrollReq.PrivateKey, []byte(enrollReq.KeyPassword))
 
-	//pp(pcc)
 	fmt.Println(pcc.Certificate)
-	svid, err := pemCollectionTOCVID(*pcc, trustDomain1CAFile)
+	verifyWorkloadCert(*pcc, trustDomain1CAFile)
+	verifyWorkloadCert(*pcc, trustDomain2CAFile)
+}
+
+var pp = func(a interface{}) {
+	b, err := json.MarshalIndent(a, "", "    ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	log.Println(string(b))
+}
+
+func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAFile string) {
+	svid, err := pemCollectionTOCVID(pcc, trustDomainCAFile)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	log.Println(svid.SPIFFEID)
+	log.Printf("Verifying SVID %s agains CA file %s", svid.SPIFFEID, trustDomainCAFile)
 
 	roots1 := map[string]*x509.CertPool{
 		"spiffe://domain1.test": svid.TrustBundlePool,
@@ -94,14 +107,6 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 	log.Println("Ferified workload path:", verifiedChains[0][0].URIs)
-}
-
-var pp = func(a interface{}) {
-	b, err := json.MarshalIndent(a, "", "    ")
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-	log.Println(string(b))
 }
 
 func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile string) (svid workload.X509SVID, err error) {
