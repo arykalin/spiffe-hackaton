@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/mr-tron/base58"
+	"io/ioutil"
 	badRandom "math/rand"
 	"net/http"
 	"os"
@@ -111,10 +112,15 @@ func fakeRetrieve(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorMessage{err.Error()})
 	}
 
+	CACertPem, err := ioutil.ReadFile(CACertPemFile)
+	if err != nil {
+		panic(err)
+	}
+
 	r := struct {
 		CertificateData string
 	}{
-		base64.StdEncoding.EncodeToString([]byte(cert + "\n" + CACertPem)),
+		base64.StdEncoding.EncodeToString([]byte(cert + "\n" + string(CACertPem))),
 	}
 	return c.JSON(http.StatusOK, r)
 }
