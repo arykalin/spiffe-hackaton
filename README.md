@@ -47,22 +47,35 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
     And if it is a database it may be a month.
 
 ## How we can integrate
-1. Add support of URI type in the Subject Alternative Name extension (SAN extension, see [RFC 5280 section 4.2.16][2]) to\
+1. Add support of URI type in the Subject Alternative Name extension (SAN extension, see [RFC 5280 section 4.2.16][1]) to\
     our products policies.
     1. Add same support to vCert SDK
     1. TODO: describe exactly how this support should look like.
     1. Policy example:
-    ```json
-    SubjAltNameUriRegex: 'spiffe://example.com/*'
+    ```
+     SubjAltNameUriRegex: 'spiffe://example.com/*'
     ```    
 1. Provide ability to request and manage SPIFFE signing certificates (basically intermediate CAs) via API. Since most of the systems
     which implement SPIFFE have support of exporting external CA we can manage this certificates on TPP\Cloud.
     TODO: test if we can create a valid SPIFFE signing certificate using TPP.
 1. Provide same ability for leaf (client) certificates
+1. Check external SPIFFE CA for constraints:
+    1. Basic Constraints: pathLenConstraint, and CA field
+    1. Name Constraints: URI SAN constraint may be checked by our policies. For examples: 
+        ```
+        nameConstraints=critical,permitted;
+          URIs: spiffe://trust1.domain
+          URIs: spiffe://trust2.domain
+        nameConstraints=critical,excluded;
+          ExcludedURIDomains: spiffe://example.com
+          ExcludedURIDomains: spiffe://local
+        ```
+    1. Also you can look into [X509-SVID constraints-and-usage][2]
 
 ## Integration sceanrios:
 1. Workload API is requesting intermediate CA from TPP\Cloud via vcert
 1. Vcert is runnning on Workload API part and monitor certificates against TPP\Cloud policies
 1. Workload request leaf (client) certificates from TPP\Cloud via vcert
 
-[2]: https://tools.ietf.org/html/rfc5280#section-4.2.1.
+[1]: https://tools.ietf.org/html/rfc5280#section-4.2.1.
+[2]: https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#4-constraints-and-usage
