@@ -13,48 +13,51 @@ type _strValue struct {
 }
 
 type serverPolicy struct {
-	CertificateAuthority _strValue
-	CsrGeneration        _strValue
-	KeyGeneration        _strValue
-	KeyPair              struct {
-		KeyAlgorithm _strValue
-		KeySize      struct {
-			Locked bool
-			Value  int
+	Policy struct {
+		CertificateAuthority _strValue
+		CsrGeneration        _strValue
+		KeyGeneration        _strValue
+		KeyPair              struct {
+			KeyAlgorithm _strValue
+			KeySize      struct {
+				Locked bool
+				Value  int
+			}
+			EllipticCurve struct {
+				Locked bool
+				Value  string
+			}
 		}
-		EllipticCurve struct {
-			Locked bool
-			Value  string
-		}
-	}
-	ManagementType _strValue
+		ManagementType _strValue
 
-	PrivateKeyReuseAllowed  bool
-	SubjAltNameDnsAllowed   bool
-	SubjAltNameEmailAllowed bool
-	SubjAltNameIpAllowed    bool
-	SubjAltNameUpnAllowed   bool
-	SubjAltNameUriAllowed   bool
-	Subject                 struct {
-		City               _strValue
-		Country            _strValue
-		Organization       _strValue
-		OrganizationalUnit struct {
-			Locked bool
-			Values []string
-		}
+		PrivateKeyReuseAllowed  bool
+		SubjAltNameDnsAllowed   bool
+		SubjAltNameEmailAllowed bool
+		SubjAltNameIpAllowed    bool
+		SubjAltNameUpnAllowed   bool
+		SubjAltNameUriAllowed   bool
+		SubjAltNameUriRegex     _strValue
+		Subject                 struct {
+			City               _strValue
+			Country            _strValue
+			Organization       _strValue
+			OrganizationalUnit struct {
+				Locked bool
+				Values []string
+			}
 
-		State _strValue
+			State _strValue
+		}
+		UniqueSubjectEnforced bool
+		WhitelistedDomains    []string
+		WildcardsAllowed      bool
 	}
-	UniqueSubjectEnforced bool
-	WhitelistedDomains    []string
-	WildcardsAllowed      bool
-	SubjAltNameUriRegex   _strValue
+	Error string
 }
 
 func fakePolicy(c echo.Context) error {
-	r := serverPolicy{
-		SubjAltNameUriRegex: hardcodedSPIFFEMasks,
-	}
+	r := serverPolicy{}
+	r.Policy.SubjAltNameUriRegex = hardcodedSPIFFEMasks
+	r.Policy.PrivateKeyReuseAllowed = true
 	return c.JSON(http.StatusOK, &r)
 }
