@@ -14,6 +14,10 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
 ### CA which can sign X.509 SVID.
 1. Emulate TPP API to request x.509 SVID
 1. Make Go code to sign x.509 SVID
+    1. Create a signing certificate with proper SVID : A signing certificate SHOULD itself be an SVID. 
+    If present, the SPIFFE ID of a signing certificate MUST NOT have a path component, and MAY reside in the 
+    trust domain of any leaf SVIDs it issues. A signing certificate MAY be used to issue further signing 
+    certificates in the same or different trust domains.
 
 ### Kubernetes sidecar container (resource) which will request X.509 SVID certificate from CA.
 1. Use vcert as basic signing tool. Make a method for requesting x.509 SVID
