@@ -50,8 +50,13 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
     SubjAltNameUriRegex: 'spiffe://example.com/*'
     ```    
 1. Provide ability to request and manage SPIFFE signing certificates (basically intermediate CAs) via API. Since most of the systems
-    which implement SPIFFE have support of exporting external CA we can manage this certificates on TPP\Cloud
+    which implement SPIFFE have support of exporting external CA we can manage this certificates on TPP\Cloud.
+    TODO: test if we can create a valid SPIFFE signing certificate using TPP.
 1. Provide same ability for leaf (client) certificates
 
+## Integration sceanrios:
+1. Workload API is requesting intermediate CA from TPP\Cloud via vcert
+1. Vcert is runnning on Workload API part and monitor certificates against TPP\Cloud policies
+1. Workload request leaf (client) certificates from TPP\Cloud via vcert
 
 [2]: https://tools.ietf.org/html/rfc5280#section-4.2.1.

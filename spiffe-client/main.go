@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/spiffe/go-spiffe/spiffe"
 	"github.com/spiffe/go-spiffe/workload"
 	"io/ioutil"
 	"log"
@@ -39,7 +40,7 @@ func main() {
 		log.Fatalf("could not connect to endpoint: %s", err)
 	}
 
-	u := url.URL{Scheme: "spiffe", Host: "example.com", Path: "foo"}
+	u := url.URL{Scheme: "spiffe", Host: "domain1.test", Path: "foo"}
 	enrollReq := &certificate.Request{
 		Subject: pkix.Name{
 			CommonName: "",
@@ -75,6 +76,16 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 	log.Println(svid.SPIFFEID)
+
+	roots1 := map[string]*x509.CertPool{
+		"spiffe://domain1.test": svid.TrustBundlePool,
+	}
+
+	verifiedChains, err := spiffe.VerifyPeerCertificate(svid.Certificates, roots1, spiffe.ExpectAnyPeer())
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	log.Println(verifiedChains)
 }
 
 var pp = func(a interface{}) {
