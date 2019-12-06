@@ -21,6 +21,8 @@ import (
 )
 
 func main() {
+	//TODO: make a code to generate intermediate signing SVID from root CA
+	//TODO: import intermediate to fatketpp
 	buf, err := ioutil.ReadFile("../faketpp/trust.pem")
 	if err != nil {
 		panic(err)
@@ -49,6 +51,7 @@ func main() {
 		KeyLength: 2048,
 	}
 
+	//TODO: policy should be checked on generate request, but it don't
 	err = c.GenerateRequest(nil, enrollReq)
 	if err != nil {
 		log.Fatalf("could not generate certificate request: %s", err)
