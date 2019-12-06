@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/asn1"
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
@@ -19,6 +20,23 @@ const (
 	CAKeyPemFile = "../cert_db/trust1.domain_key.pem"
 )
 
+func checkIsCA(req x509.CertificateRequest) bool {
+	var oidExtensionBasicConstraints = []int{2, 5, 29, 19}
+	var b struct {
+		IsCA       bool `asn1:"optional"`
+		MaxPathLen int  `asn1:"optional,default:-1"`
+	}
+	for _, ext := range req.Extensions {
+		if ext.Id.Equal(oidExtensionBasicConstraints) {
+			asn1.Unmarshal(ext.Value, &b)
+			if b.IsCA == true {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
 	template := x509.Certificate{}
 	template.Subject = req.Subject
@@ -26,11 +44,16 @@ func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
 	if err != nil {
 		return
 	}
+	if checkIsCA(req) {
+		template.IsCA = true
+		template.KeyUsage = x509.KeyUsageCertSign | x509.KeyUsageCRLSign
+	} else {
+		template.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
+	}
 	template.URIs = req.URIs
 	template.SerialNumber = big.NewInt(time.Now().UnixNano())
 	template.NotBefore = time.Now()
 	template.NotAfter = time.Now().Add(time.Hour * 24)
-	template.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
 	ca, caKey := getCA()
 	cert, err = x509.CreateCertificate(rand.Reader, &template, ca, req.PublicKey, caKey)
 	return
