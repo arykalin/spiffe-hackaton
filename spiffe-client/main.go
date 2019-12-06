@@ -22,7 +22,6 @@ import (
 
 func main() {
 	//TODO: make a code to generate intermediate signing SVID from root CA
-	//TODO: import intermediate to fatketpp
 	buf, err := ioutil.ReadFile("../faketpp/trust.pem")
 	if err != nil {
 		panic(err)

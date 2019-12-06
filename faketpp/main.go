@@ -27,6 +27,8 @@ const (
 )
 
 func main() {
+	//TODO: import intermediate to fatketpp
+	//TODO: make policy configuration from client
 	badRandom.Seed(time.Now().UnixNano())
 	e := echo.New()
 
