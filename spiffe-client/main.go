@@ -20,9 +20,14 @@ import (
 	"github.com/Venafi/vcert/pkg/endpoint"
 )
 
+const (
+	trustFile          = "../faketpp/trust.pem"
+	trustDomain1CAFile = "../cert_db/trust1.domain.crt"
+)
+
 func main() {
 	//TODO: make a code to generate intermediate signing SVID from root CA
-	buf, err := ioutil.ReadFile("../faketpp/trust.pem")
+	buf, err := ioutil.ReadFile(trustFile)
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +79,7 @@ func main() {
 
 	//pp(pcc)
 	fmt.Println(pcc.Certificate)
-	svid, err := pemCollectionTOCVID(*pcc)
+	svid, err := pemCollectionTOCVID(*pcc, trustDomain1CAFile)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -88,7 +93,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	log.Println(verifiedChains)
+	log.Println("Ferified workload path:", verifiedChains[0][0].URIs)
 }
 
 var pp = func(a interface{}) {
@@ -99,7 +104,7 @@ var pp = func(a interface{}) {
 	log.Println(string(b))
 }
 
-func pemCollectionTOCVID(collection certificate.PEMCollection) (svid workload.X509SVID, err error) {
+func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile string) (svid workload.X509SVID, err error) {
 	p, _ := pem.Decode([]byte(collection.Certificate))
 	cert, err := x509.ParseCertificate(p.Bytes)
 	if err != nil {
@@ -122,6 +127,10 @@ func pemCollectionTOCVID(collection certificate.PEMCollection) (svid workload.X5
 		svid.PrivateKey = key.(*rsa.PrivateKey)
 	case *ecdsa.PrivateKey:
 		svid.PrivateKey = key.(*ecdsa.PrivateKey)
+	}
+	CACertPem, err := ioutil.ReadFile(trustDomainFile)
+	if err != nil {
+		return
 	}
 	p, _ = pem.Decode([]byte(CACertPem))
 	cert, _ = x509.ParseCertificate(p.Bytes)
