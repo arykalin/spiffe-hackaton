@@ -43,6 +43,8 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
     which should be met in workload to give a certificate to it (node attestation).
 1. Usually you have a SPIFFE agent running on workload which executes a set of accestors to properly identify the node.
 1. SPIFFE is not for authorization and transport level security. Fundamentally SPIFFE is about identity.
+1. Certificate expiration date should be similar to workload living time. I.E. if workload is docker worker it should not more than a day.
+    And if it is a database it may be a month.
 
 ## How we can integrate
 1. Add support of URI type in the Subject Alternative Name extension (SAN extension, see [RFC 5280 section 4.2.16][2]) to\
