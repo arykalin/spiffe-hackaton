@@ -28,7 +28,8 @@ const (
 )
 
 func main() {
-	//TODO: import intermediate to fatketpp
+	//TODO: import SPIFFE intermediate to fatketpp
+	//TODO: get SPIFFE intermediate bundle from faketpp to validate SPIFFE cert
 	//TODO: make policy configuration from client
 	badRandom.Seed(time.Now().UnixNano())
 	e := echo.New()

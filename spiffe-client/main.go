@@ -47,7 +47,7 @@ func main() {
 		log.Fatalf("could not connect to endpoint: %s", err)
 	}
 
-	u := url.URL{Scheme: "spiffe", Host: "domain1.test", Path: "foo"}
+	u := url.URL{Scheme: "spiffe", Host: "domain1999.test", Path: "foo"}
 	enrollReq := &certificate.Request{
 		Subject: pkix.Name{
 			CommonName: "",
