@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
+	"flag"
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/mr-tron/base58"
@@ -21,23 +23,41 @@ const (
 	urlResourceCertificateRequest  = "/vedsdk/certificates/request"
 	urlResourceCertificateRetrieve = "/vedsdk/certificates/retrieve"
 	urlResourceCertificatePolicy   = "/vedsdk/certificates/checkpolicy"
+	urlResourceCertificateImport   = "/vedsdk/certificates/import"
 
-	listenAddr = ":8080"
-	caFile     = "server.crt"
-	keyFile    = "server.key"
+	caFile  = "server.crt"
+	keyFile = "server.key"
 )
+
+var listenAddr string
+
+func init() {
+	badRandom.Seed(time.Now().UnixNano())
+	var jsonConfigPath string
+	flag.StringVar(&jsonConfigPath, "policy", "", "")
+	flag.StringVar(&listenAddr, "listen", ":8080", "")
+	flag.Parse()
+	b, err := ioutil.ReadFile(jsonConfigPath)
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(b, &currentPolicy)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func main() {
 	//TODO: import SPIFFE intermediate to fatketpp
 	//TODO: get SPIFFE intermediate bundle from faketpp to validate SPIFFE cert
 	//TODO: make policy configuration from client
-	badRandom.Seed(time.Now().UnixNano())
 	e := echo.New()
-
 	e.POST(urlResourceAuthorize, fakeAuth)
 	e.POST(urlResourceCertificateRequest, fakeRequest)
 	e.POST(urlResourceCertificateRetrieve, fakeRetrieve)
 	e.POST(urlResourceCertificatePolicy, fakePolicy)
+	e.POST(urlResourceCertificateImport, fakeImport)
 	go func() {
 		log.Infof("Start listen http service on %s", listenAddr)
 		if err := e.StartTLS(listenAddr, caFile, keyFile); err != nil {
@@ -122,6 +142,23 @@ func fakeRetrieve(c echo.Context) error {
 		CertificateData string
 	}{
 		base64.StdEncoding.EncodeToString([]byte(cert + "\n" + string(CACertPem))),
+	}
+	return c.JSON(http.StatusOK, r)
+}
+
+func fakeImport(c echo.Context) error {
+	r := struct {
+		CertificateDN      string `json:",omitempty"`
+		CertId             string `json:",omitempty"`
+		CertificateVaultId int    `json:",omitempty"`
+		Guid               string `json:",omitempty"`
+		PrivateKeyVaultId  int    `json:",omitempty"`
+	}{
+		randomID(),
+		randomID(),
+		0,
+		randomID(),
+		0,
 	}
 	return c.JSON(http.StatusOK, r)
 }

@@ -55,8 +55,10 @@ type serverPolicy struct {
 	Error string
 }
 
+var currentPolicy serverPolicy
+
 func fakePolicy(c echo.Context) error {
-	r := serverPolicy{}
+	r := currentPolicy
 	r.Policy.SubjAltNameUriRegex = hardcodedSPIFFEMasks
 	r.Policy.SubjAltNameUriAllowed = true
 	return c.JSON(http.StatusOK, &r)
