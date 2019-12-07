@@ -79,15 +79,15 @@ func enroll(u url.URL) {
 		KeyLength: 2048,
 	}
 
-	//policy, err := c.ReadPolicyConfiguration()
-	//if err != nil {
-	//	log.Fatalf("%s", err)
-	//}
+	policy, err := c.ReadPolicyConfiguration()
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
-	//err = policy.ValidateCertificateRequest(enrollReq)
-	//if err != nil {
-	//	log.Fatalf("%s", err)
-	//}
+	err = policy.ValidateCertificateRequest(enrollReq)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 	//TODO: policy should be checked on generate request, but it don't
 	err = c.GenerateRequest(nil, enrollReq)
 	if err != nil {
