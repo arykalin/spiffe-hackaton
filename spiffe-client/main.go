@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	trustFile          = "../faketpp/trust.pem"
-	trustDomain1CAFile = "../cert_db/trust1.domain.crt"
-	trustDomain2CAFile = "../cert_db/trust2.domain.crt"
+	trustFile          = "./faketpp/trust.pem"
+	trustDomain1CAFile = "./cert_db/trust1.domain.crt"
+	trustDomain2CAFile = "./cert_db/trust2.domain.crt"
 )
 
 var serverURL string
@@ -123,6 +123,7 @@ func enroll(u url.URL) {
 	_ = pcc.AddPrivateKey(enrollReq.PrivateKey, []byte(enrollReq.KeyPassword))
 
 	f := fmt.Sprintf("%s.bundle.json", u.Host)
+	log.Println("Writing PCC to ", f)
 	err = ioutil.WriteFile(f, []byte(dumpPCC(pcc)), 0644)
 	if err != nil {
 		log.Fatalf("%s", err)
