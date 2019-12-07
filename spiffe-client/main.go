@@ -32,21 +32,30 @@ var serverURL string
 func main() {
 	//TODO: make a code to generate intermediate signing SVID from root CA
 	var co string
+	var uri string
 	var path string
 	flag.StringVar(&co, "command", "", "")
-	flag.StringVar(&path, "path", "", "")
+	flag.StringVar(&uri, "uri", "", "")
+	flag.StringVar(&path, "path", "", "Path to cert file")
 	flag.StringVar(&serverURL, "url", "https://localhost:8080/", "")
 	flag.Parse()
 
 	switch co {
 	case "enroll":
-		s, _ := url.Parse(path)
+		s, _ := url.Parse(uri)
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
 		enroll(u)
 	case "validate":
-		//verifyWorkloadCert(*pcc, trustDomain1CAFile)
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			panic(err)
+		}
+		var pcc certificate.PEMCollection
+		json.Unmarshal(b, &pcc)
+		verifyWorkloadCert(pcc, trustDomain1CAFile)
 		//verifyWorkloadCert(*pcc, trustDomain2CAFile)
-
+	default:
+		panic("you forgot command")
 	}
 }
 
