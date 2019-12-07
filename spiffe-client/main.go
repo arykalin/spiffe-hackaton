@@ -134,7 +134,7 @@ func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAFile string)
 	log.Printf("Verifying SVID %s agains CA file %s", svid.SPIFFEID, trustDomainCAFile)
 
 	roots1 := map[string]*x509.CertPool{
-		"spiffe://domain1.test": svid.TrustBundlePool,
+		"spiffe://test1.domain": svid.TrustBundlePool,
 	}
 
 	verifiedChains, err := spiffe.VerifyPeerCertificate(svid.Certificates, roots1, spiffe.ExpectAnyPeer())
