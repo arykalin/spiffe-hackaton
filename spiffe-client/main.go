@@ -30,15 +30,20 @@ const (
 func main() {
 	//TODO: make a code to generate intermediate signing SVID from root CA
 	var co string
+	var path string
 	flag.StringVar(&co, "command", "", "")
+	flag.StringVar(&path, "path", "", "")
+	flag.Parse()
 
 	switch co {
 	case "enroll":
-		enroll("example.com")
+		s, _ := url.Parse(path)
+		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
+		enroll(u)
 	}
 }
 
-func enroll(domain string) {
+func enroll(u url.URL) {
 
 	buf, err := ioutil.ReadFile(trustFile)
 	if err != nil {
@@ -59,7 +64,6 @@ func enroll(domain string) {
 		log.Fatalf("could not connect to endpoint: %s", err)
 	}
 
-	u := url.URL{Scheme: "spiffe", Host: "test1.domain", Path: "foo"}
 	enrollReq := &certificate.Request{
 		Subject: pkix.Name{
 			CommonName: "",
