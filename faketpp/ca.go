@@ -63,7 +63,7 @@ func validateSPIFFEURIs(uris []*url.URL) error {
 	if len(uris) != 1 {
 		return errors.New("bad length")
 	}
-	matched, err := regexp.MatchString(hardcodedSPIFFEMasks.Value, uris[0].String())
+	matched, err := regexp.MatchString(currentPolicy.Policy.SubjAltNameUriRegex.Value, uris[0].String())
 	if err != nil {
 		return err
 	}

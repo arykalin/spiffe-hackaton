@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-var hardcodedSPIFFEMasks = _strValue{true, "spiffe://test1.domain/*"}
-
 type _strValue struct {
 	Locked bool
 	Value  string
