@@ -40,6 +40,10 @@ func main() {
 		s, _ := url.Parse(path)
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
 		enroll(u)
+	case "validate":
+		verifyWorkloadCert(*pcc, trustDomain1CAFile)
+		verifyWorkloadCert(*pcc, trustDomain2CAFile)
+
 	}
 }
 
@@ -103,17 +107,7 @@ func enroll(u url.URL) {
 
 	_ = pcc.AddPrivateKey(enrollReq.PrivateKey, []byte(enrollReq.KeyPassword))
 
-	fmt.Println(pcc.Certificate)
-	verifyWorkloadCert(*pcc, trustDomain1CAFile)
-	verifyWorkloadCert(*pcc, trustDomain2CAFile)
-}
-
-var pp = func(a interface{}) {
-	b, err := json.MarshalIndent(a, "", "    ")
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-	log.Println(string(b))
+	dumpPCC(pcc)
 }
 
 func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAFile string) {
@@ -169,4 +163,12 @@ func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile s
 	svid.TrustBundle = []*x509.Certificate{cert}
 	svid.TrustBundlePool = pool
 	return
+}
+
+var dumpPCC = func(a interface{}) {
+	b, err := json.MarshalIndent(a, "", "    ")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	log.Println(string(b))
 }
