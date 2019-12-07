@@ -7,6 +7,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
+	"flag"
 	"fmt"
 	"github.com/spiffe/go-spiffe/spiffe"
 	"github.com/spiffe/go-spiffe/workload"
@@ -28,6 +29,17 @@ const (
 
 func main() {
 	//TODO: make a code to generate intermediate signing SVID from root CA
+	var co string
+	flag.StringVar(&co, "command", "", "")
+
+	switch co {
+	case "enroll":
+		enroll("example.com")
+	}
+}
+
+func enroll(domain string) {
+
 	buf, err := ioutil.ReadFile(trustFile)
 	if err != nil {
 		panic(err)
