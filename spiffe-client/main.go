@@ -27,12 +27,15 @@ const (
 	trustDomain2CAFile = "../cert_db/trust2.domain.crt"
 )
 
+var serverURL string
+
 func main() {
 	//TODO: make a code to generate intermediate signing SVID from root CA
 	var co string
 	var path string
 	flag.StringVar(&co, "command", "", "")
 	flag.StringVar(&path, "path", "", "")
+	flag.StringVar(&serverURL, "url", "https://localhost:8080/", "")
 	flag.Parse()
 
 	switch co {
@@ -56,7 +59,7 @@ func enroll(u url.URL) {
 
 	config := &vcert.Config{
 		ConnectorType: endpoint.ConnectorTypeTPP,
-		BaseUrl:       "http://localhost:8080",
+		BaseUrl:       serverURL,
 		Credentials: &endpoint.Authentication{
 			AccessToken: "88870cb8-a5f9-44a7-a63e-85a3e5706d32"},
 		Zone:            "default",
