@@ -51,7 +51,10 @@ func main() {
 			panic(err)
 		}
 		var pcc certificate.PEMCollection
-		json.Unmarshal(b, &pcc)
+		err = json.Unmarshal(b, &pcc)
+		if err != nil {
+			panic(err)
+		}
 		verifyWorkloadCert(pcc, trustDomain1CAFile)
 		//verifyWorkloadCert(*pcc, trustDomain2CAFile)
 	default:
