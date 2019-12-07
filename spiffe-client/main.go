@@ -41,8 +41,8 @@ func main() {
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
 		enroll(u)
 	case "validate":
-		verifyWorkloadCert(*pcc, trustDomain1CAFile)
-		verifyWorkloadCert(*pcc, trustDomain2CAFile)
+		//verifyWorkloadCert(*pcc, trustDomain1CAFile)
+		//verifyWorkloadCert(*pcc, trustDomain2CAFile)
 
 	}
 }
@@ -76,15 +76,15 @@ func enroll(u url.URL) {
 		KeyLength: 2048,
 	}
 
-	policy, err := c.ReadPolicyConfiguration()
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
+	//policy, err := c.ReadPolicyConfiguration()
+	//if err != nil {
+	//	log.Fatalf("%s", err)
+	//}
 
-	err = policy.ValidateCertificateRequest(enrollReq)
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
+	//err = policy.ValidateCertificateRequest(enrollReq)
+	//if err != nil {
+	//	log.Fatalf("%s", err)
+	//}
 	//TODO: policy should be checked on generate request, but it don't
 	err = c.GenerateRequest(nil, enrollReq)
 	if err != nil {
@@ -107,7 +107,11 @@ func enroll(u url.URL) {
 
 	_ = pcc.AddPrivateKey(enrollReq.PrivateKey, []byte(enrollReq.KeyPassword))
 
-	dumpPCC(pcc)
+	f := fmt.Sprintf("%s.bundle.json", u.Host)
+	err = ioutil.WriteFile(f, []byte(dumpPCC(pcc)), 0644)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 }
 
 func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAFile string) {
@@ -165,10 +169,10 @@ func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile s
 	return
 }
 
-var dumpPCC = func(a interface{}) {
+var dumpPCC = func(a interface{}) string {
 	b, err := json.MarshalIndent(a, "", "    ")
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	log.Println(string(b))
+	return string(b)
 }
