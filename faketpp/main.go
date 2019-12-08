@@ -95,6 +95,7 @@ func fakeAuth(c echo.Context) error {
 }
 
 func fakeRequest(c echo.Context) error {
+	log.Printf("Requesting certificate")
 	var body struct {
 		PKCS10   string
 		PolicyDN string

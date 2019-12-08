@@ -1,0 +1,5 @@
+{
+  "CACertPemFile": "cert_db/SPIFFE_root.crt",
+  "CAKeyPemFile": "cert_db/SPIFFE_root_key.pem",
+  "PolicyFile": "faketpp/policies/policy-example.json"
+}

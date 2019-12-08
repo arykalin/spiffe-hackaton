@@ -36,6 +36,7 @@ func checkIsCA(req x509.CertificateRequest) bool {
 }
 
 func signRequest(req x509.CertificateRequest, zone Zone) (cert []byte, err error) {
+	log.Println("Signing request")
 	template := x509.Certificate{}
 	template.Subject = req.Subject
 	err = validateSPIFFEURIs(req.URIs)
@@ -43,6 +44,7 @@ func signRequest(req x509.CertificateRequest, zone Zone) (cert []byte, err error
 		return
 	}
 	if checkIsCA(req) {
+		log.Println("Signing intermediate CA")
 		template.IsCA = true
 		template.BasicConstraintsValid = true
 		template.KeyUsage = x509.KeyUsageCertSign | x509.KeyUsageCRLSign

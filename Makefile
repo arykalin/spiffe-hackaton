@@ -3,7 +3,7 @@ build:
 	cd ./faketpp; env GOOS=linux GOARCH=amd64 go build -o ../bin/faketpp ./
 
 runtpp:
-	./bin/faketpp -policy=faketpp/policy-example.json
+	./bin/faketpp -policy=faketpp/policies/policy-example.json
 
 cert1:
 	./bin/spiffe-client -command enroll -uri spiffe://trust1.domain/workload1 -zone trust1
