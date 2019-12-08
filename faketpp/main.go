@@ -25,8 +25,8 @@ const (
 	urlResourceCertificatePolicy   = "/vedsdk/certificates/checkpolicy"
 	urlResourceCertificateImport   = "/vedsdk/certificates/import"
 
-	caFile  = "server.crt"
-	keyFile = "server.key"
+	caFile  = "faketpp/server.crt"
+	keyFile = "faketpp/server.key"
 )
 
 var listenAddr string
@@ -61,7 +61,7 @@ func main() {
 	go func() {
 		log.Infof("Start listen http service on %s", listenAddr)
 		if err := e.StartTLS(listenAddr, caFile, keyFile); err != nil {
-			log.Errorf("shutting down the server: %s", listenAddr)
+			log.Errorf("shutting down the server: %s", err)
 		} else {
 			log.Error("shutting down the server")
 		}
