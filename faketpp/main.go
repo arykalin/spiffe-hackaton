@@ -54,9 +54,6 @@ func init() {
 }
 
 func main() {
-	//TODO: import SPIFFE intermediate to fatketpp
-	//TODO: get SPIFFE intermediate bundle from faketpp to validate SPIFFE cert
-	//TODO: make policy configuration from client
 	e := echo.New()
 	e.POST(urlResourceAuthorize, fakeAuth)
 	e.POST(urlResourceCertificateRequest, fakeRequest)
@@ -166,6 +163,7 @@ func fakeRetrieve(c echo.Context) error {
 }
 
 func fakeImport(c echo.Context) error {
+	//TODO: import SPIFFE intermediate to fatketpp and use it for cert validation in example
 	r := struct {
 		CertificateDN      string `json:",omitempty"`
 		CertId             string `json:",omitempty"`

@@ -17,6 +17,13 @@ cert3:
 	./bin/spiffe-client -command enroll -uri spiffe://trust3.domain/workload2 -zone trust3
 	./bin/spiffe-client -command validate -path trust3.domain.bundle.json -trustDomainCAPath cert_db/trust3.domain.crt
 
-cert_wrong_domain:
+cert_bad_policy:
+	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust2
+
+cert_bad_root:
+	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust1
+	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
+
+cert_bad_root_id:
 	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust2
 	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt

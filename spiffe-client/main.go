@@ -30,8 +30,6 @@ const (
 var serverURL string
 
 func main() {
-	//TODO: make a code to generate intermediate signing SVID from root CA
-
 	var (
 		co                string
 		uri               string
@@ -112,7 +110,7 @@ func enroll(u url.URL, zone string) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	//TODO: policy should be checked on generate request, but it don't
+
 	err = c.GenerateRequest(nil, enrollReq)
 	if err != nil {
 		log.Fatalf("could not generate certificate request: %s", err)
