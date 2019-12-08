@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/Venafi/vcert"
@@ -58,12 +57,8 @@ func main() {
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
 		enroll(u, zone)
 	case "validate":
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Println("Validating cert file", dir+"/"+path)
-		b, err := ioutil.ReadFile(dir + "/" + path)
+		log.Println("Validating cert file", path)
+		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			panic(err)
 		}
@@ -139,6 +134,7 @@ func enroll(u url.URL, zone string) {
 
 	_ = pcc.AddPrivateKey(enrollReq.PrivateKey, []byte(enrollReq.KeyPassword))
 
+	fmt.Printf("\nCertificate:\n%s\nPkey:\n%s\nChain:\n%s\n", pcc.Certificate, pcc.PrivateKey, pcc.Chain)
 	f := fmt.Sprintf("%s.bundle.json", u.Host)
 	log.Println("Writing PCC to ", f)
 	err = ioutil.WriteFile(f, []byte(dumpPCC(pcc)), 0644)
@@ -213,7 +209,7 @@ func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile s
 var dumpPCC = func(a interface{}) string {
 	b, err := json.MarshalIndent(a, "", "    ")
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Fatalf("%s", err)
 	}
 	return string(b)
 }
