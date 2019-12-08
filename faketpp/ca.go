@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/url"
 	"regexp"
@@ -28,7 +29,10 @@ func checkIsCA(req x509.CertificateRequest) bool {
 	}
 	for _, ext := range req.Extensions {
 		if ext.Id.Equal(oidExtensionBasicConstraints) {
-			asn1.Unmarshal(ext.Value, &b)
+			_, err := asn1.Unmarshal(ext.Value, &b)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
 			if b.IsCA == true {
 				return true
 			}
