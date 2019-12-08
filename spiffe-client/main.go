@@ -161,10 +161,24 @@ func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAPath string)
 		root: svid.TrustBundlePool,
 	}
 
-	verifiedChains, err := spiffe.VerifyPeerCertificate(svid.Certificates, roots, spiffe.ExpectAnyPeer())
-	if err != nil {
-		log.Fatalf("%s", err)
+	//We think that writing SPIFFE ID to CA's URI is a good practice, because with it
+	//we can verify SPIFFEID with ExpctedPeer
+	var verifiedChains [][]*x509.Certificate
+	expectedPeer := fmt.Sprintf("%s", svid.Certificates[0].URIs[0])
+	//expectedPeer = fmt.Sprintf("%s",svid.TrustBundle[0].URIs[0])
+	if expectedPeer != "" {
+		verifiedChains, err = spiffe.VerifyPeerCertificate(svid.Certificates, roots, spiffe.ExpectPeer(expectedPeer))
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+	} else {
+		log.Println("WARNING: No SPIFFE URI found in CA")
+		verifiedChains, err = spiffe.VerifyPeerCertificate(svid.Certificates, roots, spiffe.ExpectAnyPeer())
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 	}
+
 	log.Println("Workload certificate verified", verifiedChains[0][0].URIs)
 }
 
