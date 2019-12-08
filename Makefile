@@ -18,7 +18,7 @@ cert3:
 	./bin/spiffe-client -command validate -path trust3.domain.bundle.json -trustDomainCAPath cert_db/trust3.domain.crt
 
 cert_bad_policy:
-	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust2
+	./bin/spiffe-client -command enroll -uri spiffe://wrong-trust.domain/workload2 -zone trust2
 
 cert_bad_root:
 	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust1
@@ -30,3 +30,8 @@ cert_bad_root_id:
 
 sign_intermediate_ca:
 	./bin/spiffe-client -command sign -zone ca-trust -path cert_db/trust4.domain_csr.pem
+	jq .Certificate cert_db/trust4.domain_csr.pem.bundle.json |xargs echo -e > cert_db/trust4.domain.crt
+
+cert_intermediate_ca:
+	./bin/spiffe-client -command enroll -uri spiffe://trust4.domain/workload2 -zone trust4
+	./bin/spiffe-client -command validate -path trust4.domain.bundle.json -trustDomainCAPath cert_db/trust4.domain.crt
