@@ -32,14 +32,19 @@ var serverURL string
 
 func main() {
 	//TODO: make a code to generate intermediate signing SVID from root CA
-	var co string
-	var uri string
-	var path string
-	var trustDomainCAPath string
+
+	var (
+		co                string
+		uri               string
+		path              string
+		zone              string
+		trustDomainCAPath string
+	)
 	flag.StringVar(&co, "command", "", "")
 	flag.StringVar(&uri, "uri", "", "")
 	flag.StringVar(&path, "path", "", "Path to cert file")
-	flag.StringVar(&trustDomainCAPath, "trustDomainCAPath", "path/to/trust/domain.crt", "Path trust domain to cert file")
+	flag.StringVar(&zone, "zone", "default", "")
+	flag.StringVar(&trustDomainCAPath, "trustDomainCAPath", "", "Path trust domain to cert file")
 	flag.StringVar(&serverURL, "url", "https://localhost:8080/", "")
 	flag.Parse()
 
@@ -51,7 +56,7 @@ func main() {
 			log.Fatalf("%s", err)
 		}
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
-		enroll(u)
+		enroll(u, zone)
 	case "validate":
 		dir, err := os.Getwd()
 		if err != nil {
@@ -74,7 +79,7 @@ func main() {
 	}
 }
 
-func enroll(u url.URL) {
+func enroll(u url.URL, zone string) {
 
 	buf, err := ioutil.ReadFile(trustFile)
 	if err != nil {
@@ -86,7 +91,7 @@ func enroll(u url.URL) {
 		BaseUrl:       serverURL,
 		Credentials: &endpoint.Authentication{
 			AccessToken: "88870cb8-a5f9-44a7-a63e-85a3e5706d32"},
-		Zone:            "default",
+		Zone:            zone,
 		ConnectionTrust: string(buf),
 	}
 
@@ -147,7 +152,7 @@ func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAPath string)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	log.Printf("Verifying SVID %s agains CA file %s", svid.SPIFFEID, trustDomainCAPath)
+	log.Printf("Verifying workload %s signed by %s", svid.SPIFFEID, svid.Certificates[0].Issuer)
 
 	s, err := url.Parse(svid.SPIFFEID)
 	if err != nil {
@@ -164,7 +169,7 @@ func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAPath string)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	log.Println("Ferified workload path:", verifiedChains[0][0].URIs)
+	log.Println("Workload certificate verified", verifiedChains[0][0].URIs)
 }
 
 func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile string) (svid workload.X509SVID, err error) {
@@ -191,6 +196,7 @@ func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile s
 	case *ecdsa.PrivateKey:
 		svid.PrivateKey = key.(*ecdsa.PrivateKey)
 	}
+	log.Printf("Loading CA from file %s", trustDomainFile)
 	CACertPem, err := ioutil.ReadFile(trustDomainFile)
 	if err != nil {
 		return
