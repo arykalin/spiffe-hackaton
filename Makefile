@@ -11,7 +11,8 @@ cert1:
 
 cert2:
 	./bin/spiffe-client -command enroll -uri spiffe://trust2.domain/workload2 -zone trust2
-	./bin/spiffe-client -command validate -path trust1.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
+	./bin/spiffe-client -command validate -path trust2.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
 
 cert_wrong_domain:
-	./bin/spiffe-client -command enroll -uri spiffe://trust1.domain/workload2 -zone trust2
+	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust2
+	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
