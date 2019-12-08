@@ -72,7 +72,7 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
         ```
     1. Also you can look into [X509-SVID constraints-and-usage][2]
 
-## Integration sceanrios:
+## Integration scenarios:
 1. Workload API is requesting intermediate CA from TPP\Cloud via vcert
 1. Vcert is runnning on Workload API part and monitor certificates against TPP\Cloud policies
 1. Workload request leaf (client) certificates from TPP\Cloud via vcert

@@ -28,3 +28,5 @@ cert_bad_root_id:
 	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust2
 	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
 
+sign_intermediate_ca:
+	./bin/spiffe-client -command sign -zone ca-trust -path cert_db/trust4.domain_csr.pem

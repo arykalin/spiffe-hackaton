@@ -66,9 +66,75 @@ func main() {
 			panic(err)
 		}
 		verifyWorkloadCert(pcc, trustDomainCAPath)
-		//verifyWorkloadCert(*pcc, trustDomain2CAFile)
+	case "sign":
+		sign(path, zone)
 	default:
 		panic("you forgot command")
+	}
+}
+
+func sign(path string, zone string) {
+	buf, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	trust, err := ioutil.ReadFile(trustFile)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	config := &vcert.Config{
+		ConnectorType: endpoint.ConnectorTypeTPP,
+		BaseUrl:       serverURL,
+		Credentials: &endpoint.Authentication{
+			AccessToken: "88870cb8-a5f9-44a7-a63e-85a3e5706d32"},
+		Zone:            zone,
+		ConnectionTrust: string(trust),
+	}
+
+	c, err := vcert.NewClient(config)
+
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	req := &certificate.Request{}
+
+	err = req.SetCSR(buf)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	//policy, err := c.ReadPolicyConfiguration()
+	//if err != nil {
+	//	log.Fatalf("%s", err)
+	//}
+
+	//err = policy.ValidateCertificateRequest(req)
+	//if err != nil {
+	//	log.Fatalf("%s", err)
+	//}
+
+	requestID, err := c.RequestCertificate(req)
+	if err != nil {
+		log.Fatalf("could not submit certificate request: %s", err)
+	}
+
+	pickupReq := &certificate.Request{
+		PickupID: requestID,
+		Timeout:  180 * time.Second,
+	}
+	pcc, err := c.RetrieveCertificate(pickupReq)
+	if err != nil {
+		log.Fatalf("could not retrieve certificate using requestId %s: %s", requestID, err)
+	}
+
+	fmt.Printf("\nCertificate:\n%s\nPkey:\n%s\nChain:\n%s\n", pcc.Certificate, pcc.PrivateKey, pcc.Chain)
+	f := fmt.Sprintf("%s.bundle.json", path)
+	log.Println("Writing PCC to ", f)
+	err = ioutil.WriteFile(f, []byte(dumpPCC(pcc)), 0644)
+	if err != nil {
+		log.Fatalf("%s", err)
 	}
 }
 
@@ -76,7 +142,7 @@ func enroll(u url.URL, zone string) {
 
 	buf, err := ioutil.ReadFile(trustFile)
 	if err != nil {
-		panic(err)
+		log.Fatalf("%s", err)
 	}
 
 	config := &vcert.Config{

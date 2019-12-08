@@ -45,6 +45,7 @@ func signRequest(req x509.CertificateRequest, zone Zone) (cert []byte, err error
 	if checkIsCA(req) {
 		template.IsCA = true
 		template.KeyUsage = x509.KeyUsageCertSign | x509.KeyUsageCRLSign
+		template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
 	} else {
 		template.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
 	}
@@ -61,7 +62,8 @@ func validateSPIFFEURIs(uris []*url.URL) error {
 	if len(uris) != 1 {
 		return errors.New("bad length")
 	}
-	matched, err := regexp.MatchString(currentPolicy.Policy.SubjAltNameUriRegex.Value, uris[0].String())
+	m := currentPolicy.Policy.SubjAltNameUriRegex.Value
+	matched, err := regexp.MatchString(m, uris[0].String())
 	if err != nil {
 		return err
 	}
