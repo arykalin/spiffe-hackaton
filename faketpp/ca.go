@@ -44,6 +44,7 @@ func signRequest(req x509.CertificateRequest, zone Zone) (cert []byte, err error
 	}
 	if checkIsCA(req) {
 		template.IsCA = true
+		template.BasicConstraintsValid = true
 		template.KeyUsage = x509.KeyUsageCertSign | x509.KeyUsageCRLSign
 		template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
 	} else {
