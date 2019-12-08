@@ -69,6 +69,7 @@ type serverPolicy struct {
 var currentPolicy serverPolicy
 
 func fakePolicy(c echo.Context) error {
+	//TODO: add policy parameters for SVID sign certificates.
 	r := currentPolicy
 	return c.JSON(http.StatusOK, &r)
 }
