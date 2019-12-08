@@ -15,12 +15,6 @@ import (
 	"time"
 )
 
-const (
-	CACertPemFile = "cert_db/trust1.domain.crt"
-
-	CAKeyPemFile = "cert_db/trust1.domain_key.pem"
-)
-
 func checkIsCA(req x509.CertificateRequest) bool {
 	var oidExtensionBasicConstraints = []int{2, 5, 29, 19}
 	var b struct {
@@ -41,7 +35,7 @@ func checkIsCA(req x509.CertificateRequest) bool {
 	return false
 }
 
-func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
+func signRequest(req x509.CertificateRequest, zone Zone) (cert []byte, err error) {
 	template := x509.Certificate{}
 	template.Subject = req.Subject
 	err = validateSPIFFEURIs(req.URIs)
@@ -58,7 +52,7 @@ func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
 	template.SerialNumber = big.NewInt(time.Now().UnixNano())
 	template.NotBefore = time.Now()
 	template.NotAfter = time.Now().Add(time.Hour * 24)
-	ca, caKey := getCA()
+	ca, caKey := getCA(zone.CACertPemFile, zone.CAKeyPemFile)
 	cert, err = x509.CreateCertificate(rand.Reader, &template, ca, req.PublicKey, caKey)
 	return
 }
@@ -77,7 +71,7 @@ func validateSPIFFEURIs(uris []*url.URL) error {
 	return nil
 }
 
-func getCA() (*x509.Certificate, *rsa.PrivateKey) {
+func getCA(CACertPemFile, CAKeyPemFile string) (*x509.Certificate, *rsa.PrivateKey) {
 	CACertPem, err := ioutil.ReadFile(CACertPemFile)
 	if err != nil {
 		panic(err)
