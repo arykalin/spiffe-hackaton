@@ -46,7 +46,10 @@ func main() {
 	switch co {
 	case "enroll":
 		log.Println("Enroll cert with SVID", uri)
-		s, _ := url.Parse(uri)
+		s, err := url.Parse(uri)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
 		enroll(u)
 	case "validate":
@@ -146,11 +149,18 @@ func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAPath string)
 	}
 	log.Printf("Verifying SVID %s agains CA file %s", svid.SPIFFEID, trustDomainCAPath)
 
-	roots1 := map[string]*x509.CertPool{
-		"spiffe://test1.domain": svid.TrustBundlePool,
+	s, err := url.Parse(svid.SPIFFEID)
+	if err != nil {
+		log.Fatalf("%s", err)
 	}
 
-	verifiedChains, err := spiffe.VerifyPeerCertificate(svid.Certificates, roots1, spiffe.ExpectAnyPeer())
+	root := s.Scheme + "://" + s.Host
+	log.Println("Verifying for root", root)
+	roots := map[string]*x509.CertPool{
+		root: svid.TrustBundlePool,
+	}
+
+	verifiedChains, err := spiffe.VerifyPeerCertificate(svid.Certificates, roots, spiffe.ExpectAnyPeer())
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
