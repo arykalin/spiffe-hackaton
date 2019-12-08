@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/Venafi/vcert"
@@ -34,19 +35,27 @@ func main() {
 	var co string
 	var uri string
 	var path string
+	var trustDomainCAPath string
 	flag.StringVar(&co, "command", "", "")
 	flag.StringVar(&uri, "uri", "", "")
 	flag.StringVar(&path, "path", "", "Path to cert file")
+	flag.StringVar(&trustDomainCAPath, "trustDomainCAPath", "path/to/trust/domain.crt", "Path trust domain to cert file")
 	flag.StringVar(&serverURL, "url", "https://localhost:8080/", "")
 	flag.Parse()
 
 	switch co {
 	case "enroll":
+		log.Println("Enroll cert with SVID", uri)
 		s, _ := url.Parse(uri)
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
 		enroll(u)
 	case "validate":
-		b, err := ioutil.ReadFile(path)
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Validating cert file", dir+"/"+path)
+		b, err := ioutil.ReadFile(dir + "/" + path)
 		if err != nil {
 			panic(err)
 		}
@@ -55,7 +64,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		verifyWorkloadCert(pcc, trustDomain1CAFile)
+		verifyWorkloadCert(pcc, trustDomainCAPath)
 		//verifyWorkloadCert(*pcc, trustDomain2CAFile)
 	default:
 		panic("you forgot command")
@@ -130,12 +139,12 @@ func enroll(u url.URL) {
 	}
 }
 
-func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAFile string) {
-	svid, err := pemCollectionTOCVID(pcc, trustDomainCAFile)
+func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAPath string) {
+	svid, err := pemCollectionTOCVID(pcc, trustDomainCAPath)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	log.Printf("Verifying SVID %s agains CA file %s", svid.SPIFFEID, trustDomainCAFile)
+	log.Printf("Verifying SVID %s agains CA file %s", svid.SPIFFEID, trustDomainCAPath)
 
 	roots1 := map[string]*x509.CertPool{
 		"spiffe://test1.domain": svid.TrustBundlePool,

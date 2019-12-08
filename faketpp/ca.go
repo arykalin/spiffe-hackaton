@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	CACertPemFile = "../cert_db/trust1.domain.crt"
+	CACertPemFile = "cert_db/trust1.domain.crt"
 
-	CAKeyPemFile = "../cert_db/trust1.domain_key.pem"
+	CAKeyPemFile = "cert_db/trust1.domain_key.pem"
 )
 
 func checkIsCA(req x509.CertificateRequest) bool {
