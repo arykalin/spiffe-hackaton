@@ -138,10 +138,6 @@ Stack: Go language, go-spiffe library, vCert.
  
 [![asciicast](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK.svg)](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK)
 
-[1]: https://tools.ietf.org/html/rfc5280#section-4.2.1.
-[2]: https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#4-constraints-and-usage
-
-     
 
 ## How we can integrate
 1. Add support of URI type in the Subject Alternative Name extension (SAN extension, see [RFC 5280 section 4.2.16][1]) to\
@@ -174,3 +170,20 @@ Stack: Go language, go-spiffe library, vCert.
 1. Vcert is runnning on Workload API part and monitor certificates against TPP\Cloud policies
 1. Workload request leaf (client) SVID certificates from TPP\Cloud via vcert
 
+## Further improvements
+1. Add policy support for pathLenConstraint and Name Constraints for sign SVID  [X509-SVID constraints-and-usage][2]
+1. Check that on policy level that leaf SVID have digitalSignature constraint
+1. On policy level check that SAN have only one URI
+1. Policy for checking that CA have SAN URI extension set to SPIFFE URI
+1. Policy support for pathLenConstraint for CA
+1. Basically check all fields in [appendix-a-x509-field-reference][3] and try to check them on policy level.
+1. Try to emulate SPIFFE system with two containers getting certificate from workload API where they checked by fake TPP.
+1. Try to implement scenario where third party system, like Istio, get intermediate CA from TPP
+ 
+
+
+
+
+[1]: https://tools.ietf.org/html/rfc5280#section-4.2.1.
+[2]: https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#4-constraints-and-usage
+[3]: https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#appendix-a-x509-field-reference
