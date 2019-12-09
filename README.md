@@ -41,10 +41,10 @@ Stack: Go language, go-spiffe library, vCert.
 ###Command line client
 1. spiffe-client used to enroll, sign and validate SVIDs
 
-##Usage examples:
+##Usage:
 
-1. build application run `make build`
-1. start fake TPP server `./bin/faketpp -policy=faketpp/policies/policy-example.json`
+1. To build application run `make build`
+1. To start fake TPP server `./bin/faketpp -policy=faketpp/policies/policy-example.json`
 1. enroll SVID:
     `./bin/spiffe-client -command enroll -uri spiffe://trust1.domain/workload1 -zone trust1`
 1. validate SVID:
@@ -57,7 +57,72 @@ Stack: Go language, go-spiffe library, vCert.
     
 1. Sign SVID with intermediate CA:
     `./bin/spiffe-client -command enroll -uri spiffe://trust4.domain/workload2 -zone trust4`   
+
+##Usage scenarios:
+1. Show cert_db/trust1.domain.crt certificate in openssl
+    ```
+    openssl x509 -in cert_db/trust1.domain.crt -noout -text
+    ```
+    Look into X509v3 Subject Alternative Name field
     
+1. Sign certificate for workload1 in trust domain trust1.domain:
+    ```
+    cat faketpp/zones/trust1.json
+    {
+      "CACertPemFile": "cert_db/trust1.domain.crt",
+      "CAKeyPemFile": "cert_db/trust1.domain_key.pem",
+      "PolicyFile": "faketpp/policies/policy-example.json"
+    }
+    
+    ./bin/spiffe-client -command enroll -uri spiffe://trust1.domain/workload1 -zone trust1
+    ./bin/spiffe-client -command validate -path trust1.domain.bundle.json -trustDomainCAPath cert_db/trust1.domain.crt
+    ```
+
+1. Sign certificate for workload2 in trust domain trust2.domain. 
+    ```
+    cat faketpp/zones/trust2.json
+    {
+      "CACertPemFile": "cert_db/trust2.domain.crt",
+      "CAKeyPemFile": "cert_db/trust2.domain_key.pem",
+      "PolicyFile": "faketpp/policies/policy-example.json"
+    }
+
+	./bin/spiffe-client -command enroll -uri spiffe://trust2.domain/workload2 -zone trust2
+	./bin/spiffe-client -command validate -path trust2.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt    
+    ```
+
+1. cert_bad_policy:
+	./bin/spiffe-client -command enroll -uri spiffe://wrong-trust.domain/workload2 -zone trust2
+
+1. cert_bad_root:
+	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust1
+	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
+
+1. cert_bad_root_id:
+	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust2
+	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
+
+1. Show cert_db/trust3.domain.crt certificate in openssl
+    ```
+    openssl x509 -in cert_db/trust3.domain.crt -noout -text
+    ```
+    Look into X509v3 Subject Alternative Name field
+    
+1. Sign certificate for workload3 in trust domain trust3.domain. This trust domain CA don't have SAN URI extension.
+ It is not necessary but recommended. So we will show warning about. Also you will see that I can sign certificate with
+ different trust domain in URI.
+	./bin/spiffe-client -command enroll -uri spiffe://trust123.domain/workload2 -zone trust3
+	./bin/spiffe-client -command validate -path trust123.domain.bundle.json -trustDomainCAPath cert_db/trust3.domain.crt
+
+
+1. sign_intermediate_ca:
+	./bin/spiffe-client -command sign -zone ca-trust -path cert_db/trust4.domain_csr.pem
+	jq .Certificate cert_db/trust4.domain_csr.pem.bundle.json |xargs echo -e > cert_db/trust4.domain.crt
+
+1. cert_intermediate_ca:
+	./bin/spiffe-client -command enroll -uri spiffe://trust4.domain/workload2 -zone trust4
+	./bin/spiffe-client -command validate -path trust4.domain.bundle.json -trustDomainCAPath cert_db/trust4.domain.crt
+	    
 ### More examples in asciinema video
  
 [![asciicast](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK.svg)](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK)
