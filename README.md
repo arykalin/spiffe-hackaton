@@ -77,5 +77,26 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
 1. Vcert is runnning on Workload API part and monitor certificates against TPP\Cloud policies
 1. Workload request leaf (client) certificates from TPP\Cloud via vcert
 
+##Usage examples:
+
+1. build application run `make build`
+1. start fake TPP server `./bin/faketpp -policy=faketpp/policies/policy-example.json`
+1. enroll SVID:
+    `./bin/spiffe-client -command enroll -uri spiffe://trust1.domain/workload1 -zone trust1`
+1. validate SVID:
+    `./bin/spiffe-client -command validate -path trust1.domain.bundle.json -trustDomainCAPath cert_db/trust1.domain.crt`
+1. sign intermediate CA using pregenerated CSR:
+    `./bin/spiffe-client -command sign -zone ca-trust -path cert_db/trust4.domain_csr.pem`    
+ 
+1. copy signed CA pem to the path defined in zone configuration (faketpp/zones/ca-trust.json file):
+    `jq .Certificate cert_db/trust4.domain_csr.pem.bundle.json |xargs echo -e > cert_db/trust4.domain.crt`
+    
+1. Sign SVID with intermediate CA:
+    `./bin/spiffe-client -command enroll -uri spiffe://trust4.domain/workload2 -zone trust4`   
+    
+### More examples in asciinema video
+ 
+[![asciicast](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK.svg)](https://asciinema.org/a/vmo1iE4fj3bDQFOByCSVH5h4D)
+
 [1]: https://tools.ietf.org/html/rfc5280#section-4.2.1.
 [2]: https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#4-constraints-and-usage
