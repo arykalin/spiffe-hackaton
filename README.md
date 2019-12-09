@@ -91,18 +91,18 @@ Stack: Go language, go-spiffe library, vCert.
 	./bin/spiffe-client -command validate -path trust2.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt    
     ```
 
-1. cert_bad_policy:
+1. Try to sign certificate which does not meet TPP policy 
     ```
 	./bin/spiffe-client -command enroll -uri spiffe://wrong-trust.domain/workload2 -zone trust2
     ```
 
-1. cert_bad_root:
+1. Try to validate certificate signed by another authority:
     ```
 	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust1
 	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
     ```
 
-1. cert_bad_root_id:
+1. Try to validate certificate which have wrong trust domain in it's path:
     ```
 	./bin/spiffe-client -command enroll -uri spiffe://trust-wrong.domain/workload2 -zone trust2
 	./bin/spiffe-client -command validate -path trust-wrong.domain.bundle.json -trustDomainCAPath cert_db/trust2.domain.crt
