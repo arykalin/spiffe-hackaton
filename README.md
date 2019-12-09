@@ -96,7 +96,7 @@ Stack: Go language, Kubernetes, Istio/Consul/Spire sources to understand how it 
     
 ### More examples in asciinema video
  
-[![asciicast](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK.svg)](https://asciinema.org/a/vmo1iE4fj3bDQFOByCSVH5h4D)
+[![asciicast](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK.svg)](https://asciinema.org/a/nyk8QGYzftnytSK88rxtKsMIK)
 
 [1]: https://tools.ietf.org/html/rfc5280#section-4.2.1.
 [2]: https://github.com/spiffe/spiffe/blob/master/standards/X509-SVID.md#4-constraints-and-usage
