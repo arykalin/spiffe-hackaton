@@ -1,10 +1,14 @@
-# spiffe-hackaton
+# Venafi SPIFFE POC
+
 We want to understand how SPIFFE works and what problems and possible integrations 
 have applications like Consul Connect or Istio Citadel.
 
 Stack: Go language, go-spiffe library, vCert.
 
+If you're new to the SPIFFE look into this introduction video: 
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/0LSaNrOabH4/0.jpg)](https://www.youtube.com/watch?v=0LSaNrOabH4)
 ## General thoughts
+
 1. SPIFFE is a set of standards for multi platform workload authentication.
 1. SPIFFE have many implementations: SPIRE, Istio security, Consul-connect, ghostunnel etc.
 1. Main thing used for workload authentication is an x.509 certificate with SAN URI extension set to workload identifier. 
@@ -20,12 +24,13 @@ Stack: Go language, go-spiffe library, vCert.
 1. TPP and Cloud can be used as high level policy system to check x509 SVIDs. We can use vCert to validate SVID against
     policy and import them if necessary. Also we can use TPP\Cloud for enrolling intermediate SVID CAs.
     
-##Project description
+## Project description
+
 1. We tried to emulate TPP server to add URI support to TPP policy
 1. We used vCert SDK and added URI to the request and policy validation
 1. We used go-spiffe library to validate x509 SVID certificates
 
-###Fake TPP
+### Fake TPP
 1. Fake TPP is server which emulates TPP. It support following API endpoints:
     ```
     /vedsdk/certificates/request
@@ -38,10 +43,10 @@ Stack: Go language, go-spiffe library, vCert.
 1. You can run server using following command:
     `./bin/faketpp -policy=faketpp/policies/policy-example.json`
     
-###Command line client
+### Command line client
 1. spiffe-client used to enroll, sign and validate SVIDs
 
-##Usage:
+## Usage:
 
 1. To build application run `make build`
 1. To start fake TPP server `./bin/faketpp -policy=faketpp/policies/policy-example.json`
@@ -58,7 +63,7 @@ Stack: Go language, go-spiffe library, vCert.
 1. Sign SVID with intermediate CA:
     `./bin/spiffe-client -command enroll -uri spiffe://trust4.domain/workload2 -zone trust4`   
 
-##Usage scenarios:
+## Usage scenarios:
 1. Show cert_db/trust1.domain.crt certificate in openssl
     ```
     openssl x509 -in cert_db/trust1.domain.crt -noout -text
