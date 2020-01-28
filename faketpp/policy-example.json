@@ -16,7 +16,7 @@
     "KeyPair": {
       "KeyAlgorithm": {
         "Locked": false,
-        "Value": "RSA"
+        "Value": "EC"
       },
       "KeySize": {
         "Locked": false,

@@ -147,6 +147,17 @@ func fakeRetrieve(c echo.Context) error {
 }
 
 func fakeImport(c echo.Context) error {
+	var body struct {
+		PolicyDN             string            `json:",omitempty"`
+		ObjectName           string            `json:",omitempty"`
+		CertificateData      string            `json:",omitempty"`
+		PrivateKeyData       string            `json:",omitempty"`
+		Password             string            `json:",omitempty"`
+		Reconcile            bool              `json:",omitempty"`
+		CASpecificAttributes map[string]string `json:",omitempty"`
+	}
+	c.Bind(&body)
+
 	r := struct {
 		CertificateDN      string `json:",omitempty"`
 		CertId             string `json:",omitempty"`
@@ -160,7 +171,8 @@ func fakeImport(c echo.Context) error {
 		randomID(),
 		0,
 	}
-	return c.JSON(http.StatusOK, r)
+	time.Sleep(10 * time.Millisecond)
+	return c.JSON(http.StatusBadRequest, r)
 }
 
 func randomID() string {
