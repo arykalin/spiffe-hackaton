@@ -1,0 +1,5 @@
+{
+  "CACertPemFile": "cert_db/trust1.domain.crt",
+  "CAKeyPemFile": "cert_db/trust1.domain_key.pem",
+  "PolicyFile": "faketpp/policies/policy-example.json"
+}

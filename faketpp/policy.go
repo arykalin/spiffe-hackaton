@@ -1,13 +1,26 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/labstack/echo"
+	"io/ioutil"
 	"net/http"
+)
+
+const (
+	zoneFileTemplate = "faketpp/zones/%s.json"
 )
 
 type _strValue struct {
 	Locked bool
 	Value  string
+}
+
+type Zone struct {
+	CACertPemFile string
+	CAKeyPemFile  string
+	PolicyFile    string
 }
 
 type serverPolicy struct {
@@ -56,6 +69,21 @@ type serverPolicy struct {
 var currentPolicy serverPolicy
 
 func fakePolicy(c echo.Context) error {
+	//TODO: add policy parameters for SVID sign certificates.
 	r := currentPolicy
 	return c.JSON(http.StatusOK, &r)
+}
+
+func parseZone(zoneDN string) (zone Zone, err error) {
+	//removing `\\VED\\Policy\\`
+	zoneDN = zoneDN[12:]
+	b, err := ioutil.ReadFile(fmt.Sprintf(zoneFileTemplate, zoneDN))
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(b, &zone)
+	if err != nil {
+		return
+	}
+	return
 }

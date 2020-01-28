@@ -8,16 +8,11 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/url"
 	"regexp"
 	"time"
-)
-
-const (
-	CACertPemFile = "../cert_db/trust1.domain.crt"
-
-	CAKeyPemFile = "../cert_db/trust1.domain_key.pem"
 )
 
 func checkIsCA(req x509.CertificateRequest) bool {
@@ -28,7 +23,10 @@ func checkIsCA(req x509.CertificateRequest) bool {
 	}
 	for _, ext := range req.Extensions {
 		if ext.Id.Equal(oidExtensionBasicConstraints) {
-			asn1.Unmarshal(ext.Value, &b)
+			_, err := asn1.Unmarshal(ext.Value, &b)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
 			if b.IsCA == true {
 				return true
 			}
@@ -37,7 +35,8 @@ func checkIsCA(req x509.CertificateRequest) bool {
 	return false
 }
 
-func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
+func signRequest(req x509.CertificateRequest, zone Zone) (cert []byte, err error) {
+	log.Println("Signing request")
 	template := x509.Certificate{}
 	template.Subject = req.Subject
 	err = validateSPIFFEURIs(req.URIs)
@@ -45,8 +44,11 @@ func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
 		return
 	}
 	if checkIsCA(req) {
+		log.Println("Signing intermediate CA")
 		template.IsCA = true
+		template.BasicConstraintsValid = true
 		template.KeyUsage = x509.KeyUsageCertSign | x509.KeyUsageCRLSign
+		template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth}
 	} else {
 		template.KeyUsage = x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
 	}
@@ -54,7 +56,7 @@ func signRequest(req x509.CertificateRequest) (cert []byte, err error) {
 	template.SerialNumber = big.NewInt(time.Now().UnixNano())
 	template.NotBefore = time.Now()
 	template.NotAfter = time.Now().Add(time.Hour * 24)
-	ca, caKey := getCA()
+	ca, caKey := getCA(zone.CACertPemFile, zone.CAKeyPemFile)
 	cert, err = x509.CreateCertificate(rand.Reader, &template, ca, req.PublicKey, caKey)
 	return
 }
@@ -63,7 +65,8 @@ func validateSPIFFEURIs(uris []*url.URL) error {
 	if len(uris) != 1 {
 		return errors.New("bad length")
 	}
-	matched, err := regexp.MatchString(currentPolicy.Policy.SubjAltNameUriRegex.Value, uris[0].String())
+	m := currentPolicy.Policy.SubjAltNameUriRegex.Value
+	matched, err := regexp.MatchString(m, uris[0].String())
 	if err != nil {
 		return err
 	}
@@ -73,7 +76,7 @@ func validateSPIFFEURIs(uris []*url.URL) error {
 	return nil
 }
 
-func getCA() (*x509.Certificate, *rsa.PrivateKey) {
+func getCA(CACertPemFile, CAKeyPemFile string) (*x509.Certificate, *rsa.PrivateKey) {
 	CACertPem, err := ioutil.ReadFile(CACertPemFile)
 	if err != nil {
 		panic(err)

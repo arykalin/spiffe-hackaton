@@ -25,11 +25,16 @@ const (
 	urlResourceCertificatePolicy   = "/vedsdk/certificates/checkpolicy"
 	urlResourceCertificateImport   = "/vedsdk/certificates/import"
 
-	caFile  = "server.crt"
-	keyFile = "server.key"
+	caFile  = "faketpp/server.crt"
+	keyFile = "faketpp/server.key"
 )
 
 var listenAddr string
+
+type certRecord struct {
+	Cert   string
+	CAFile string
+}
 
 func init() {
 	badRandom.Seed(time.Now().UnixNano())
@@ -49,9 +54,6 @@ func init() {
 }
 
 func main() {
-	//TODO: import SPIFFE intermediate to fatketpp
-	//TODO: get SPIFFE intermediate bundle from faketpp to validate SPIFFE cert
-	//TODO: make policy configuration from client
 	e := echo.New()
 	e.POST(urlResourceAuthorize, fakeAuth)
 	e.POST(urlResourceCertificateRequest, fakeRequest)
@@ -61,7 +63,7 @@ func main() {
 	go func() {
 		log.Infof("Start listen http service on %s", listenAddr)
 		if err := e.StartTLS(listenAddr, caFile, keyFile); err != nil {
-			log.Errorf("shutting down the server: %s", listenAddr)
+			log.Errorf("shutting down the server: %s", err)
 		} else {
 			log.Error("shutting down the server")
 		}
@@ -93,8 +95,10 @@ func fakeAuth(c echo.Context) error {
 }
 
 func fakeRequest(c echo.Context) error {
+	log.Printf("Requesting certificate")
 	var body struct {
-		PKCS10 string
+		PKCS10   string
+		PolicyDN string
 	}
 
 	err := c.Bind(&body)
@@ -106,13 +110,26 @@ func fakeRequest(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorMessage{err.Error()})
 	}
-	cert, err := signRequest(*req)
+
+	zone, err := parseZone(body.PolicyDN)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorMessage{err.Error()})
+	}
+
+	cert, err := signRequest(*req, zone)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, errorMessage{err.Error()})
 	}
+
 	certID := randomID()
 	encodedCert := pem.EncodeToMemory(&pem.Block{Bytes: cert, Type: "CERTIFICATE"})
-	saveToDB(certID, string(encodedCert))
+
+	record := certRecord{
+		Cert:   string(encodedCert),
+		CAFile: zone.CACertPemFile,
+	}
+
+	saveToDB(certID, record)
 	r := struct {
 		CertificateDN string
 	}{
@@ -133,15 +150,15 @@ func fakeRetrieve(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorMessage{err.Error()})
 	}
 
-	CACertPem, err := ioutil.ReadFile(CACertPemFile)
+	CACertPem, err := ioutil.ReadFile(cert.CAFile)
 	if err != nil {
-		panic(err)
+		return c.JSON(http.StatusInternalServerError, errorMessage{err.Error()})
 	}
 
 	r := struct {
 		CertificateData string
 	}{
-		base64.StdEncoding.EncodeToString([]byte(cert + "\n" + string(CACertPem))),
+		base64.StdEncoding.EncodeToString([]byte(cert.Cert + "\n" + string(CACertPem))),
 	}
 	return c.JSON(http.StatusOK, r)
 }

@@ -22,48 +22,66 @@ import (
 )
 
 const (
-	trustFile          = "../faketpp/trust.pem"
-	trustDomain1CAFile = "../cert_db/trust1.domain.crt"
-	trustDomain2CAFile = "../cert_db/trust2.domain.crt"
+	trustFile          = "./faketpp/trust.pem"
+	trustDomain1CAFile = "./cert_db/trust1.domain.crt"
+	trustDomain2CAFile = "./cert_db/trust2.domain.crt"
 )
 
 var serverURL string
 
 func main() {
-	//TODO: make a code to generate intermediate signing SVID from root CA
-	var co string
-	var uri string
-	var path string
+	var (
+		co                string
+		uri               string
+		path              string
+		zone              string
+		trustDomainCAPath string
+	)
 	flag.StringVar(&co, "command", "", "")
 	flag.StringVar(&uri, "uri", "", "")
 	flag.StringVar(&path, "path", "", "Path to cert file")
+	flag.StringVar(&zone, "zone", "default", "")
+	flag.StringVar(&trustDomainCAPath, "trustDomainCAPath", "", "Path trust domain to cert file")
 	flag.StringVar(&serverURL, "url", "https://localhost:8080/", "")
 	flag.Parse()
 
 	switch co {
 	case "enroll":
-		s, _ := url.Parse(uri)
+		log.Println("Enroll cert with SVID", uri)
+		s, err := url.Parse(uri)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 		u := url.URL{Scheme: s.Scheme, Host: s.Host, Path: s.Path}
-		enroll(u)
+		enroll(u, zone)
 	case "validate":
+		log.Println("Validating cert file", path)
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			panic(err)
 		}
 		var pcc certificate.PEMCollection
-		json.Unmarshal(b, &pcc)
-		verifyWorkloadCert(pcc, trustDomain1CAFile)
-		//verifyWorkloadCert(*pcc, trustDomain2CAFile)
+		err = json.Unmarshal(b, &pcc)
+		if err != nil {
+			panic(err)
+		}
+		verifyWorkloadCert(pcc, trustDomainCAPath)
+	case "sign":
+		sign(path, zone)
 	default:
 		panic("you forgot command")
 	}
 }
 
-func enroll(u url.URL) {
-
-	buf, err := ioutil.ReadFile(trustFile)
+func sign(path string, zone string) {
+	buf, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+		log.Fatalf("%s", err)
+	}
+
+	trust, err := ioutil.ReadFile(trustFile)
+	if err != nil {
+		log.Fatalf("%s", err)
 	}
 
 	config := &vcert.Config{
@@ -71,7 +89,68 @@ func enroll(u url.URL) {
 		BaseUrl:       serverURL,
 		Credentials: &endpoint.Authentication{
 			AccessToken: "88870cb8-a5f9-44a7-a63e-85a3e5706d32"},
-		Zone:            "default",
+		Zone:            zone,
+		ConnectionTrust: string(trust),
+	}
+
+	c, err := vcert.NewClient(config)
+
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	req := &certificate.Request{}
+
+	err = req.SetCSR(buf)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	//policy, err := c.ReadPolicyConfiguration()
+	//if err != nil {
+	//	log.Fatalf("%s", err)
+	//}
+
+	//err = policy.ValidateCertificateRequest(req)
+	//if err != nil {
+	//	log.Fatalf("%s", err)
+	//}
+
+	requestID, err := c.RequestCertificate(req)
+	if err != nil {
+		log.Fatalf("could not submit certificate request: %s", err)
+	}
+
+	pickupReq := &certificate.Request{
+		PickupID: requestID,
+		Timeout:  180 * time.Second,
+	}
+	pcc, err := c.RetrieveCertificate(pickupReq)
+	if err != nil {
+		log.Fatalf("could not retrieve certificate using requestId %s: %s", requestID, err)
+	}
+
+	fmt.Printf("\nCertificate:\n%s\nPkey:\n%s\nChain:\n%s\n", pcc.Certificate, pcc.PrivateKey, pcc.Chain)
+	f := fmt.Sprintf("%s.bundle.json", path)
+	log.Println("Writing PCC to ", f)
+	err = ioutil.WriteFile(f, []byte(dumpPCC(pcc)), 0644)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+}
+
+func enroll(u url.URL, zone string) {
+
+	buf, err := ioutil.ReadFile(trustFile)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	config := &vcert.Config{
+		ConnectorType: endpoint.ConnectorTypeTPP,
+		BaseUrl:       serverURL,
+		Credentials: &endpoint.Authentication{
+			AccessToken: "88870cb8-a5f9-44a7-a63e-85a3e5706d32"},
+		Zone:            zone,
 		ConnectionTrust: string(buf),
 	}
 
@@ -97,7 +176,7 @@ func enroll(u url.URL) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	//TODO: policy should be checked on generate request, but it don't
+
 	err = c.GenerateRequest(nil, enrollReq)
 	if err != nil {
 		log.Fatalf("could not generate certificate request: %s", err)
@@ -119,29 +198,53 @@ func enroll(u url.URL) {
 
 	_ = pcc.AddPrivateKey(enrollReq.PrivateKey, []byte(enrollReq.KeyPassword))
 
+	fmt.Printf("\nCertificate:\n%s\nPkey:\n%s\nChain:\n%s\n", pcc.Certificate, pcc.PrivateKey, pcc.Chain)
 	f := fmt.Sprintf("%s.bundle.json", u.Host)
+	log.Println("Writing PCC to ", f)
 	err = ioutil.WriteFile(f, []byte(dumpPCC(pcc)), 0644)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
 }
 
-func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAFile string) {
-	svid, err := pemCollectionTOCVID(pcc, trustDomainCAFile)
+func verifyWorkloadCert(pcc certificate.PEMCollection, trustDomainCAPath string) {
+	svid, err := pemCollectionTOCVID(pcc, trustDomainCAPath)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	log.Printf("Verifying SVID %s agains CA file %s", svid.SPIFFEID, trustDomainCAFile)
+	log.Printf("Verifying workload %s signed by %s", svid.SPIFFEID, svid.Certificates[0].Issuer)
 
-	roots1 := map[string]*x509.CertPool{
-		"spiffe://test1.domain": svid.TrustBundlePool,
-	}
-
-	verifiedChains, err := spiffe.VerifyPeerCertificate(svid.Certificates, roots1, spiffe.ExpectAnyPeer())
+	s, err := url.Parse(svid.SPIFFEID)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	log.Println("Ferified workload path:", verifiedChains[0][0].URIs)
+
+	root := s.Scheme + "://" + s.Host
+	log.Println("Verifying for root", root)
+	roots := map[string]*x509.CertPool{
+		root: svid.TrustBundlePool,
+	}
+
+	//We think that writing SPIFFE ID to CA's URI is a good practice, because with it
+	//we can verify SPIFFEID with ExpctedPeer
+	var verifiedChains [][]*x509.Certificate
+
+	if len(svid.TrustBundle[0].URIs) > 0 {
+		expectedPeer := fmt.Sprintf("%s%s", svid.TrustBundle[0].URIs[0], s.Path)
+		log.Println("Expecting workload have peer ID", expectedPeer)
+		verifiedChains, err = spiffe.VerifyPeerCertificate(svid.Certificates, roots, spiffe.ExpectPeer(expectedPeer))
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+	} else {
+		log.Println("WARNING: No SPIFFE URI found in CA")
+		verifiedChains, err = spiffe.VerifyPeerCertificate(svid.Certificates, roots, spiffe.ExpectAnyPeer())
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+	}
+
+	log.Println("Workload certificate verified", verifiedChains[0][0].URIs)
 }
 
 func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile string) (svid workload.X509SVID, err error) {
@@ -168,6 +271,7 @@ func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile s
 	case *ecdsa.PrivateKey:
 		svid.PrivateKey = key.(*ecdsa.PrivateKey)
 	}
+	log.Printf("Loading CA from file %s", trustDomainFile)
 	CACertPem, err := ioutil.ReadFile(trustDomainFile)
 	if err != nil {
 		return
@@ -184,7 +288,7 @@ func pemCollectionTOCVID(collection certificate.PEMCollection, trustDomainFile s
 var dumpPCC = func(a interface{}) string {
 	b, err := json.MarshalIndent(a, "", "    ")
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Fatalf("%s", err)
 	}
 	return string(b)
 }
